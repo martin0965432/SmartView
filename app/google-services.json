@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "118861003602",
+    "project_id": "viewsmart-85746",
+    "storage_bucket": "viewsmart-85746.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118861003602:android:1b71c521c5393a9096588b",
+        "android_client_info": {
+          "package_name": "com.example.smartview"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "118861003602-uq7umjloup7dt5k5s318o29fta3i90a9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartview",
+            "certificate_hash": "56d2acf3ef78bb2b20644a4181e69babb567589e"
+          }
+        },
+        {
+          "client_id": "118861003602-ndagsqht9brvlk8vcc627rvtkp6718fu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqDSF2GKNmS56gDKTARQi2ixzNsvBdxDI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "118861003602-ndagsqht9brvlk8vcc627rvtkp6718fu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
