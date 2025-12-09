@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.smartview.auth.*
+import com.example.smartview.shop.*
 import com.example.smartview.ui.theme.SmartViewTheme
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.auth.ktx.auth
@@ -205,6 +206,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToContact = {
                                     navController.navigate("contact")
+                                },
+                                onNavigateToShop = {
+                                    navController.navigate("shop")
                                 }
                             )
                         }
@@ -267,6 +271,47 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
+                        }
+
+                        // Shop Screen
+                        composable("shop") {
+                            var selectedProduct by remember { mutableStateOf<Product?>(null) }
+                            var selectedPack by remember { mutableStateOf<ProductPack?>(null) }
+                            
+                            if (selectedProduct != null || selectedPack != null) {
+                                CheckoutScreen(
+                                    product = selectedProduct,
+                                    pack = selectedPack,
+                                    onBackClick = {
+                                        selectedProduct = null
+                                        selectedPack = null
+                                    },
+                                    onPaymentComplete = {
+                                        selectedProduct = null
+                                        selectedPack = null
+                                        navController.navigate("main") {
+                                            popUpTo("shop") { inclusive = true }
+                                        }
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "¡Gracias por tu compra!",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                )
+                            } else {
+                                ShopScreen(
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    },
+                                    onProductSelect = { product ->
+                                        selectedProduct = product
+                                    },
+                                    onPackSelect = { pack ->
+                                        selectedPack = pack
+                                    }
+                                )
+                            }
                         }
                     }
                 }

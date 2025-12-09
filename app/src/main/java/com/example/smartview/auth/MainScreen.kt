@@ -35,7 +35,8 @@ fun MainScreen(
     onSignOut: () -> Unit,
     onNavigateToProducts: () -> Unit = {},
     onNavigateToContact: () -> Unit = {},
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToShop: () -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -68,6 +69,12 @@ fun MainScreen(
                         scope.launch {
                             drawerState.close()
                             onNavigateToProfile()
+                        }
+                    },
+                    onNavigateToShop = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToShop()
                         }
                     }
                 )
@@ -108,7 +115,8 @@ fun DrawerContent(
     onSignOut: () -> Unit,
     onNavigateToProducts: () -> Unit = {},
     onNavigateToContact: () -> Unit = {},
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToShop: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val profilePreferences = remember { ProfilePreferences(context) }
@@ -198,6 +206,12 @@ fun DrawerContent(
             label = { Text("Perfil") },
             selected = false,
             onClick = onNavigateToProfile
+        )
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.ShoppingCart, contentDescription = null) },
+            label = { Text("Tienda") },
+            selected = false,
+            onClick = onNavigateToShop
         )
 
         Spacer(modifier = Modifier.weight(1f))
