@@ -196,6 +196,75 @@ class MainActivity : ComponentActivity() {
                                             popUpTo(0) { inclusive = true }
                                         }
                                     }
+                                },
+                                onNavigateToProducts = {
+                                    navController.navigate("products")
+                                },
+                                onNavigateToProfile = {
+                                    navController.navigate("profile")
+                                },
+                                onNavigateToContact = {
+                                    navController.navigate("contact")
+                                }
+                            )
+                        }
+
+                        // Products Screen
+                        composable("products") {
+                            ProductsScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // Contact Screen
+                        composable("contact") {
+                            ContactScreen(
+                                onBackClick = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // Profile Screen
+                        composable("profile") {
+                            val currentUser = firebaseAuth.currentUser
+                            val userData = currentUser?.let {
+                                UserData(
+                                    userId = it.uid,
+                                    username = it.displayName ?: it.email?.substringBefore("@"),
+                                    profilePictureUrl = it.photoUrl?.toString()
+                                )
+                            }
+
+                            ProfileScreen(
+                                userData = userData,
+                                onBackClick = {
+                                    navController.popBackStack()
+                                },
+                                onSignOut = {
+                                    lifecycleScope.launch {
+                                        firebaseAuth.signOut()
+                                        googleAuthUiClient.signOut()
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Sesión cerrada",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    }
+                                },
+                                onSwitchAccount = {
+                                    lifecycleScope.launch {
+                                        firebaseAuth.signOut()
+                                        googleAuthUiClient.signOut()
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    }
                                 }
                             )
                         }

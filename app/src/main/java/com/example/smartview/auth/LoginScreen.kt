@@ -1,8 +1,10 @@
 package com.example.smartview.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -11,14 +13,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.smartview.R
+
+// Color palette based on ViewSmart branding
+private val PrimaryBlue = Color(0xFF1E88E5)
+private val PrimaryDark = Color(0xFF0D47A1)
+private val AccentCyan = Color(0xFF00BCD4)
+private val GradientStart = Color(0xFF0D47A1)
+private val GradientMiddle = Color(0xFF1565C0)
+private val GradientEnd = Color(0xFF0097A7)
 
 @Composable
 fun LoginScreen(
@@ -38,9 +51,9 @@ fun LoginScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF6366F1),
-                        Color(0xFF8B5CF6),
-                        Color(0xFFEC4899)
+                        GradientStart,
+                        GradientMiddle,
+                        GradientEnd
                     )
                 )
             )
@@ -52,12 +65,14 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo y título
-            Icon(
-                imageVector = Icons.Default.Face,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(80.dp)
+            // Logo - usando ic_launcher.jpg
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher),
+                contentDescription = "ViewSmart Logo",
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -82,7 +97,8 @@ fun LoginScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp)
@@ -93,13 +109,22 @@ fun LoginScreen(
                         onValueChange = { email = it },
                         label = { Text("Correo electrónico") },
                         leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = null)
+                            Icon(
+                                Icons.Default.Email, 
+                                contentDescription = null,
+                                tint = PrimaryBlue
+                            )
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            focusedLabelColor = PrimaryBlue,
+                            cursorColor = PrimaryBlue
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -110,13 +135,18 @@ fun LoginScreen(
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = null)
+                            Icon(
+                                Icons.Default.Lock, 
+                                contentDescription = null,
+                                tint = PrimaryBlue
+                            )
                         },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Lock else Icons.Default.Lock,
-                                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                                    tint = if (passwordVisible) AccentCyan else PrimaryBlue
                                 )
                             }
                         },
@@ -125,7 +155,12 @@ fun LoginScreen(
                             keyboardType = KeyboardType.Password
                         ),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            focusedLabelColor = PrimaryBlue,
+                            cursorColor = PrimaryBlue
+                        )
                     )
 
                     // Error message
@@ -143,11 +178,12 @@ fun LoginScreen(
                     // Login button
                     Button(
                         onClick = { onLoginClick(email, password) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
                         enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF6366F1)
-                        )
+                            containerColor = PrimaryBlue
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -155,7 +191,10 @@ fun LoginScreen(
                                 color = Color.White
                             )
                         } else {
-                            Text("Iniciar Sesión", modifier = Modifier.padding(8.dp))
+                            Text(
+                                "Iniciar Sesión", 
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                            )
                         }
                     }
 
@@ -166,13 +205,13 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Divider(modifier = Modifier.weight(1f))
+                        HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = "  O  ",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Divider(modifier = Modifier.weight(1f))
+                        HorizontalDivider(modifier = Modifier.weight(1f))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -180,8 +219,12 @@ fun LoginScreen(
                     // Google Sign In button
                     OutlinedButton(
                         onClick = onGoogleSignInClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PrimaryDark
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
@@ -207,7 +250,7 @@ fun LoginScreen(
                             text = "Regístrate",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6366F1)
+                                color = PrimaryBlue
                             ),
                             modifier = Modifier.clickable { onRegisterClick() }
                         )

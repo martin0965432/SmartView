@@ -1,8 +1,10 @@
 package com.example.smartview.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,20 +16,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.smartview.R
-import com.example.smartview.components.VideoBanner
-import com.example.smartview.components.VideoCarousel
+import com.example.smartview.components.MediaCarousel
+import com.example.smartview.components.MediaItem
+import com.example.smartview.ui.theme.AppColors
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     userData: UserData?,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onNavigateToProducts: () -> Unit = {},
+    onNavigateToContact: () -> Unit = {},
+    onNavigateToProfile: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -43,6 +51,24 @@ fun MainScreen(
                             drawerState.close()
                             onSignOut()
                         }
+                    },
+                    onNavigateToProducts = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToProducts()
+                        }
+                    },
+                    onNavigateToContact = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToContact()
+                        }
+                    },
+                    onNavigateToProfile = {
+                        scope.launch {
+                            drawerState.close()
+                            onNavigateToProfile()
+                        }
                     }
                 )
             }
@@ -51,7 +77,7 @@ fun MainScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("ViewSmart") },
+                    title = { Text("ViewSmart", fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
@@ -62,8 +88,9 @@ fun MainScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = AppColors.PrimaryBlue,
+                        titleContentColor = AppColors.TextOnPrimary,
+                        navigationIconContentColor = AppColors.TextOnPrimary
                     )
                 )
             }
@@ -78,43 +105,76 @@ fun MainScreen(
 @Composable
 fun DrawerContent(
     userData: UserData?,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onNavigateToProducts: () -> Unit = {},
+    onNavigateToContact: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val profilePreferences = remember { ProfilePreferences(context) }
+    val localPhotoPath = profilePreferences.getSavedPhotoPath()
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Header con info del usuario
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            // Profile photo - prioritize local, then Google, then placeholder
+            val imageToShow: Any? = localPhotoPath?.let { java.io.File(it) } ?: userData?.profilePictureUrl
+            
+            if (imageToShow != null) {
+                AsyncImage(
+                    model = imageToShow,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 3.dp,
+                            color = AppColors.PrimaryBlue,
+                            shape = CircleShape
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.PrimaryLight.copy(alpha = 0.2f))
+                        .border(
+                            width = 3.dp,
+                            color = AppColors.PrimaryBlue,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = AppColors.PrimaryBlue
+                    )
+                }
+            }
+            
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = userData?.username ?: "Usuario",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                text = "ID: ${userData?.userId?.take(8) ?: "N/A"}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
 
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Opciones de navegación
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text("Inicio") },
@@ -122,16 +182,22 @@ fun DrawerContent(
             onClick = { }
         )
         NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Share, contentDescription = null) },
+            label = { Text("Nuestra Solución") },
+            selected = false,
+            onClick = onNavigateToProducts
+        )
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Email, contentDescription = null) },
+            label = { Text("Contacto") },
+            selected = false,
+            onClick = onNavigateToContact
+        )
+        NavigationDrawerItem(
             icon = { Icon(Icons.Default.Person, contentDescription = null) },
             label = { Text("Perfil") },
             selected = false,
-            onClick = { }
-        )
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text("Configuración") },
-            selected = false,
-            onClick = { }
+            onClick = onNavigateToProfile
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -139,7 +205,6 @@ fun DrawerContent(
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de cerrar sesión
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) },
             label = { Text("Cerrar Sesión") },
@@ -157,183 +222,171 @@ fun DrawerContent(
 
 @Composable
 fun MainContent(modifier: Modifier = Modifier) {
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Video Carousel - Fixed position, not in scroll
-        VideoCarousel(
-            videoResIds = listOf(
-                R.raw.banner_video_1,
-                R.raw.banner_video_2
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
-        
-        // Scrollable content
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
+        item(key = "media_carousel") {
+            MediaCarousel(
+                mediaItems = listOf(
+                    MediaItem.Video(R.raw.banner_video_1),
+                    MediaItem.Image(R.drawable.baston),
+                    MediaItem.Image(R.drawable.gafas1),
+                    MediaItem.Image(R.drawable.gafas2),
+                    MediaItem.Image(R.drawable.gafas3),
+                    MediaItem.Image(R.drawable.gafas4),
+                    MediaItem.Image(R.drawable.gafas5),
+                    MediaItem.Image(R.drawable.gafas6),
+                    MediaItem.Image(R.drawable.gafas7),
+                    MediaItem.Image(R.drawable.dije)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
-            // Sección: El Problema
-            item {
-                SectionTitle(
-                    title = "El Desafío Visual",
-                    icon = Icons.Default.Warning
-                )
-            }
+        item {
+            SectionTitle(
+                title = "El Desafío Visual",
+                icon = Icons.Default.Warning
+            )
+        }
 
-            item {
-                ProblemCard(
-                    title = "253 Millones de Personas",
-                    description = "Viven con discapacidad visual moderada o severa en todo el mundo",
-                    color = Color(0xFFE53935)
-                )
-            }
+        item {
+            ProblemCard(
+                title = "253 Millones de Personas",
+                description = "Viven con discapacidad visual moderada o severa en todo el mundo",
+                color = Color(0xFFE53935)
+            )
+        }
 
-            item {
-                ProblemCard(
-                    title = "36 Millones",
-                    description = "Experimentan ceguera total, enfrentando desafíos diarios de movilidad",
-                    color = Color(0xFFFB8C00)
-                )
-            }
+        item {
+            ProblemCard(
+                title = "36 Millones",
+                description = "Experimentan ceguera total, enfrentando desafíos diarios de movilidad",
+                color = Color(0xFFFB8C00)
+            )
+        }
 
-            item {
-                ProblemCard(
-                    title = "Limitaciones Actuales",
-                    description = "Los bastones tradicionales solo detectan obstáculos a nivel del suelo",
-                    color = Color(0xFFFDD835)
-                )
-            }
+        item {
+            ProblemCard(
+                title = "Limitaciones Actuales",
+                description = "Los bastones tradicionales solo detectan obstáculos a nivel del suelo",
+                color = Color(0xFFFDD835)
+            )
+        }
 
-            // Sección: Solución
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SectionTitle(
-                    title = "La Solución ViewSmart",
-                    icon = Icons.Default.Star
-                )
-            }
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            SectionTitle(
+                title = "La Solución ViewSmart",
+                icon = Icons.Default.Star
+            )
+        }
 
-            item {
+        item {
+            Text(
+                text = "Un ecosistema integrado de tres dispositivos que trabajan en armonía para proporcionar una cobertura completa de 360 grados.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+        }
+
+        item(key = "baston_inteligente") {
+            ProductCard(
+                title = "Bastón Inteligente",
+                icon = Icons.Default.Place,
+                features = listOf(
+                    "Sensores ultrasónicos de alta precisión",
+                    "Detección de obstáculos a nivel del suelo",
+                    "Alertas vibratorias y sonoras",
+                    "Batería de larga duración (48 horas)",
+                    "Resistente al agua (IP67)"
+                ),
+                gradientColors = listOf(Color(0xFF3B82F6), Color(0xFF2563EB))
+            )
+        }
+
+        item(key = "gafas_inteligentes") {
+            ProductCard(
+                title = "Gafas Inteligentes",
+                icon = Icons.Default.Face,
+                features = listOf(
+                    "Sensores ultrasónicos integrados",
+                    "Detección de obstáculos a altura de cabeza",
+                    "Alertas de audio direccionales",
+                    "Diseño ligero y ergonómico",
+                    "Compatible con lentes graduados"
+                ),
+                gradientColors = listOf(Color(0xFF8B5CF6), Color(0xFF7C3AED))
+            )
+        }
+
+        item(key = "dije_sensores") {
+            ProductCard(
+                title = "Dije con Sensores",
+                icon = Icons.Default.FavoriteBorder,
+                features = listOf(
+                    "Sensores ultrasónicos de torso",
+                    "Detección de obstáculos a altura media",
+                    "Alertas táctiles suaves",
+                    "Diseño discreto y elegante",
+                    "Sincronización automática con otros dispositivos"
+                ),
+                gradientColors = listOf(Color(0xFFEC4899), Color(0xFFDB2777))
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            SectionTitle(
+                title = "Impacto Real",
+                icon = Icons.Default.Star
+            )
+        }
+
+        item {
+            ImpactCard(
+                quote = "ViewSmart ha transformado mi vida. Ahora puedo moverme con confianza y seguridad.",
+                author = "María González, usuaria desde 2023"
+            )
+        }
+
+        item {
+            ImpactCard(
+                quote = "La tecnología de 360 grados me da una libertad que nunca pensé posible.",
+                author = "Carlos Ramírez, usuario desde 2024"
+            )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            SectionTitle(
+                title = "Beneficios Clave",
+                icon = Icons.Default.CheckCircle
+            )
+        }
+
+        item {
+            BenefitsList()
+        }
+
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = "Un ecosistema integrado de tres dispositivos que trabajan en armonía para proporcionar una cobertura completa de 360 grados.",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "ViewSmart - Innovación que transforma vidas",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    textAlign = TextAlign.Center
                 )
-            }
-
-            // Componente 1: Bastón Inteligente
-            item {
-                ProductCard(
-                    title = "Bastón Inteligente",
-                    icon = Icons.Default.Place,
-                    features = listOf(
-                        "Sensores ultrasónicos de alta precisión",
-                        "Detección de obstáculos a nivel del suelo",
-                        "Alertas vibratorias y sonoras",
-                        "Batería de larga duración (48 horas)",
-                        "Resistente al agua (IP67)"
-                    ),
-                    gradientColors = listOf(Color(0xFF3B82F6), Color(0xFF2563EB)),
-                    imageResId = R.drawable.glasses_1
-                )
-            }
-
-            // Componente 2: Gafas Inteligentes
-            item {
-                ProductCard(
-                    title = "Gafas Inteligentes",
-                    icon = Icons.Default.Face,
-                    features = listOf(
-                        "Sensores ultrasónicos integrados",
-                        "Detección de obstáculos a altura de cabeza",
-                        "Alertas de audio direccionales",
-                        "Diseño ligero y ergonómico",
-                        "Compatible con lentes graduados"
-                    ),
-                    gradientColors = listOf(Color(0xFF8B5CF6), Color(0xFF7C3AED)),
-                    imageResId = R.drawable.glasses_3
-                )
-            }
-
-            // Componente 3: Dije con Sensores
-            item {
-                ProductCard(
-                    title = "Dije con Sensores",
-                    icon = Icons.Default.FavoriteBorder,
-                    features = listOf(
-                        "Sensores ultrasónicos de torso",
-                        "Detección de obstáculos a altura media",
-                        "Alertas táctiles suaves",
-                        "Diseño discreto y elegante",
-                        "Sincronización automática con otros dispositivos"
-                    ),
-                    gradientColors = listOf(Color(0xFFEC4899), Color(0xFFDB2777)),
-                    imageResId = R.drawable.glasses_5
-                )
-            }
-
-            // Sección: Testimonios
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SectionTitle(
-                    title = "Impacto Real",
-                    icon = Icons.Default.Star
-                )
-            }
-
-            item {
-                ImpactCard(
-                    quote = "ViewSmart ha transformado mi vida. Ahora puedo moverme con confianza y seguridad.",
-                    author = "María González, usuaria desde 2023"
-                )
-            }
-
-            item {
-                ImpactCard(
-                    quote = "La tecnología de 360 grados me da una libertad que nunca pensé posible.",
-                    author = "Carlos Ramírez, usuario desde 2024"
-                )
-            }
-
-            // Sección: Beneficios
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                SectionTitle(
-                    title = "Beneficios Clave",
-                    icon = Icons.Default.CheckCircle
-                )
-            }
-
-            item {
-                BenefitsList()
-            }
-
-            // Footer
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "ViewSmart - Innovación que transforma vidas",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
             }
         }
     }
@@ -417,7 +470,6 @@ fun ProductCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Image section
             if (imageResId != null) {
                 androidx.compose.foundation.Image(
                     painter = androidx.compose.ui.res.painterResource(id = imageResId),
@@ -430,7 +482,6 @@ fun ProductCard(
                 )
             }
             
-            // Content section with gradient
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
